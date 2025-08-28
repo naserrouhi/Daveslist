@@ -16,4 +16,11 @@ public record ListingDto
 }
 
 public record PictureDto(string Url);
-public record ReplyDto(int Id, string Username, string Content, DateTime CreatedAt);
+
+public record ReplyDto
+{
+    public int Id { get; init; }
+    public int UserId { get; init; }
+    public string Content { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+}

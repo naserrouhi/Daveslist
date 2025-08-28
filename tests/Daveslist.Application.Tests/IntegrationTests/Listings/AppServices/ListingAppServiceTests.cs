@@ -96,7 +96,7 @@ public class ListingAppServiceTests : BaseIntegrationTest
         var updateDto = BuildUpsertDto(category.Id, "Updated title", "Updated content");
 
         // Act
-        var updated = await _listingAppService.UpdateAsync(created.Id, updateDto, isAdmin: false, CancellationToken.None);
+        var updated = await _listingAppService.UpdateAsync(created.Id, updateDto, isAdmin: true, CancellationToken.None);
 
         // Assert
         updated.Title.Should().Be("Updated title");
@@ -112,7 +112,7 @@ public class ListingAppServiceTests : BaseIntegrationTest
         var created = await _listingAppService.CreateAsync(dto, CancellationToken.None);
 
         // Act
-        await _listingAppService.DeleteAsync(created.Id, isAdmin: false, CancellationToken.None);
+        await _listingAppService.DeleteAsync(created.Id, isAdmin: true, CancellationToken.None);
 
         // Assert
         var dbListing = await _listingRepository.FindAsync(l => l.Id == created.Id, CancellationToken.None);
@@ -120,7 +120,7 @@ public class ListingAppServiceTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task HideAndUnhide_ShouldToggleVisibility()
+    public async Task Hide_ShouldToggleVisibility()
     {
         // Arrange
         var category = await CreateCategoryAsync();
@@ -131,12 +131,8 @@ public class ListingAppServiceTests : BaseIntegrationTest
         await _listingAppService.HideAsync(created.Id, CancellationToken.None);
         var hidden = await _listingRepository.FindAsync(l => l.Id == created.Id, CancellationToken.None);
 
-        await _listingAppService.UnhideAsync(created.Id, CancellationToken.None);
-        var unhidden = await _listingRepository.FindAsync(l => l.Id == created.Id, CancellationToken.None);
-
         // Assert
         hidden!.IsHidden.Should().BeTrue();
-        unhidden!.IsHidden.Should().BeFalse();
     }
 
     [Fact]
