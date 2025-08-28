@@ -1,3 +1,3 @@
 ﻿namespace Daveslist.Application.Categories.Models;
 
-public record CategoryDto(string Name, bool isPublic);
+public record CategoryDto(int Id, string Name, bool IsPublic);

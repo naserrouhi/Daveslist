@@ -2,6 +2,7 @@
 
 public record ListingDto
 {
+    public int Id { get; set; }
     public int? CategoryId { get; init; }
     public bool IsPublic { get; init; }
     public bool IsHidden { get; init; }
@@ -15,4 +16,4 @@ public record ListingDto
 }
 
 public record PictureDto(string Url);
-public record ReplyDto(string Username, string Content, DateTime CreatedAt);
+public record ReplyDto(int Id, string Username, string Content, DateTime CreatedAt);
