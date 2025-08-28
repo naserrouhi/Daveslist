@@ -6,5 +6,5 @@ public interface ICategoryAppService
 {
     Task<CategoryDto> CreateAsync(string name, bool isPublic, CancellationToken cancellationToken);
     Task DeleteAsync(int id, CancellationToken cancellationToken);
-    Task<IEnumerable<CategoryDto>> GetListAsync(CancellationToken cancellationToken);
+    Task<IEnumerable<CategoryDto>> GetListAsync(bool isUserAuthenticated, CancellationToken cancellationToken);
 }

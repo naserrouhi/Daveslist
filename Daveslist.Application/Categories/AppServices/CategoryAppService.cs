@@ -2,6 +2,7 @@
 using Daveslist.Application.Categories.Models;
 using Daveslist.Domain.Categories.DomainEvents;
 using Daveslist.Domain.Categories.DomainServices;
+using Daveslist.Domain.Categories.Models;
 using Daveslist.Domain.Categories.Repositories;
 using Daveslist.Domain.Shared.Interfaces.DomainEvents;
 
@@ -25,9 +26,14 @@ public class CategoryAppService : ICategoryAppService
         _domainEventDispatcher = domainEventDispatcher;
     }
 
-    public async Task<IEnumerable<CategoryDto>> GetListAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<CategoryDto>> GetListAsync(bool isUserAuthenticated, CancellationToken cancellationToken)
     {
-        var categories = await _categoryRepository.GetAllAsync(cancellationToken);
+        IEnumerable<Category> categories;
+
+        if (isUserAuthenticated)
+            categories = await _categoryRepository.GetAllAsync(cancellationToken);
+        else
+            categories = await _categoryRepository.GetListAsync(c => c.IsPublic, cancellationToken);
 
         return _mapper.Map<IEnumerable<CategoryDto>>(categories);
     }

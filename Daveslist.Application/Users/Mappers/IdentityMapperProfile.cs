@@ -11,7 +11,5 @@ public class IdentityMapperProfile : Profile
         CreateMap<RegisterDto, RegisterModel>();
 
         CreateMap<LoginDto, LoginModel>();
-
-        CreateMap<UserModel, UserDto>();
     }
 }

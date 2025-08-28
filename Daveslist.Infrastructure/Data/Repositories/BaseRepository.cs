@@ -35,6 +35,20 @@ public class BaseRepository<T, TKey> : IBaseRepository<T, TKey> where T : class
         return await _dbSet.Where(predicate).ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>> predicate,
+                                                   int pageNumber,
+                                                   int pageSize,
+                                                   CancellationToken cancellationToken)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        return await _dbSet.Where(predicate)
+                           .Skip((pageNumber - 1) * pageSize)
+                           .Take(pageSize)
+                           .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken)
     {
         return await _dbSet.AnyAsync(predicate, cancellationToken);

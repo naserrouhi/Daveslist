@@ -11,18 +11,25 @@ public class PrivateMessageAppService : IPrivateMessageAppService
     private readonly IPrivateMessageRepository _privateMessageRepository;
     private readonly IUserContext _userContext;
     private readonly IMapper _mapper;
+    private readonly IIdentityManager _identityManager;
 
     public PrivateMessageAppService(IPrivateMessageRepository privateMessageRepository,
                                     IUserContext userContext,
-                                    IMapper mapper)
+                                    IMapper mapper,
+                                    IIdentityManager identityManager)
     {
         _privateMessageRepository = privateMessageRepository;
         _userContext = userContext;
         _mapper = mapper;
+        _identityManager = identityManager;
     }
 
     public async Task SendAsync(int toUserId, string content, CancellationToken cancellationToken)
     {
+        var toUser = await _identityManager.FindByIdAsync(toUserId);
+        if (toUser is null)
+            throw new KeyNotFoundException("User not found.");
+
         var fromUserId = _userContext.GetCurrentUserId().GetValueOrDefault();
         var privateMessage = new PrivateMessage(fromUserId, toUserId, content);
 

@@ -10,6 +10,7 @@ public interface IBaseRepository<T, TKey>
     Task<T?> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken);
     Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken);
     Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize, CancellationToken cancellationToken);
     void Remove(T entity);
     void RemoveRange(IEnumerable<T> entities);
     Task SaveChangesAsync(CancellationToken cancellationToken);

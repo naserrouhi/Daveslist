@@ -1,5 +1,7 @@
 ﻿using Daveslist.Application.Categories.AppServices;
 using Daveslist.Application.Categories.Models;
+using Daveslist.Infrastructure.Identity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Daveslist.Api.Controllers;
@@ -18,12 +20,15 @@ public class CategoryController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CategoryDto>>> GetListAsync(CancellationToken cancellationToken)
     {
-        var categories = await _categoryAppService.GetListAsync(cancellationToken);
+        var isUserAuthenticated = !User.Identity?.IsAuthenticated ?? false;
+
+        var categories = await _categoryAppService.GetListAsync(isUserAuthenticated, cancellationToken);
 
         return Ok(categories);
     }
 
     [HttpPost]
+    [Authorize(Roles = $"{UserRoles.Moderator},{UserRoles.Admin}")]
     public async Task<ActionResult<CategoryDto>> CreateAsync([FromQuery] string name, [FromQuery] bool isPublic, CancellationToken cancellationToken)
     {
         var category = await _categoryAppService.CreateAsync(name, isPublic, cancellationToken);
@@ -32,6 +37,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = $"{UserRoles.Moderator},{UserRoles.Admin}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         await _categoryAppService.DeleteAsync(id, cancellationToken);

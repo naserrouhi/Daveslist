@@ -12,7 +12,7 @@ public static class ApplicationBuilderExtensions
         using var scope = app.ApplicationServices.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
 
-        string[] roles = [UserRoles.Admin, UserRoles.User, UserRoles.Moderator, UserRoles.Visitor];
+        string[] roles = [UserRoles.Admin, UserRoles.User, UserRoles.Moderator];
 
         foreach (var role in roles)
         {

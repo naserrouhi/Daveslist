@@ -1,4 +1,6 @@
 ﻿using Daveslist.Application.PrivateMessages.AppServices;
+using Daveslist.Infrastructure.Identity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Daveslist.Api.Controllers;
@@ -15,6 +17,7 @@ public class PrivateMessageController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = UserRoles.User)]
     public async Task<IActionResult> GetListAsync(CancellationToken cancellationToken)
     {
         var messages = await _privateMessageAppService.GetListAsync(cancellationToken);
@@ -22,10 +25,11 @@ public class PrivateMessageController : ControllerBase
         return Ok(messages);
     }
 
-    [HttpPost("users/{userId:int}")]
-    public async Task<IActionResult> SendAsync([FromRoute] int userId, [FromBody] string content, CancellationToken cancellationToken)
+    [HttpPost("users/{id:int}")]
+    [Authorize(Roles = UserRoles.User)]
+    public async Task<IActionResult> SendAsync([FromRoute] int id, [FromBody] string content, CancellationToken cancellationToken)
     {
-        await _privateMessageAppService.SendAsync(userId, content, cancellationToken);
+        await _privateMessageAppService.SendAsync(id, content, cancellationToken);
 
         return Accepted();
     }

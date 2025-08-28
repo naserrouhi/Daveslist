@@ -25,16 +25,33 @@ public class ListingAppService : IListingAppService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<ListingDto>> GetListAsync(int categoryId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ListingDto>> GetListAsync(bool isUserAuthenticated,
+                                                            int categoryId,
+                                                            int pageNumber,
+                                                            int pageSize,
+                                                            CancellationToken cancellationToken)
     {
-        var listings = await _listingRepository.GetListAsync(l => l.CategoryId == categoryId, cancellationToken);
+        var category = await _categoryRepository.FindAsync(c => c.Id == categoryId, cancellationToken);
+        if (category is null)
+            throw new KeyNotFoundException("Category not found.");
+
+        if (!isUserAuthenticated && !category.IsPublic)
+            return [];
+
+        var listings = await _listingRepository.GetListAsync(l => l.CategoryId == categoryId && (l.IsPublic || isUserAuthenticated),
+                                                             pageNumber,
+                                                             pageSize,
+                                                             cancellationToken);
 
         return _mapper.Map<IEnumerable<ListingDto>>(listings);
     }
 
-    public async Task<ListingDto> GetAsync(int id, CancellationToken cancellationToken)
+    public async Task<ListingDto> GetAsync(bool isUserAuthenticated, int id, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await _listingRepository.FindAsync(l => l.Id == id && (l.IsPublic || isUserAuthenticated), cancellationToken);
+
+        if (listing is null)
+            throw new KeyNotFoundException("Listing not found.");
 
         return _mapper.Map<ListingDto>(listing);
     }
@@ -55,25 +72,25 @@ public class ListingAppService : IListingAppService
         return _mapper.Map<ListingDto>(listing);
     }
 
-    public async Task<ListingDto> UpdateAsync(int id, UpsertListingDto upsertListingDto, CancellationToken cancellationToken)
+    public async Task<ListingDto> UpdateAsync(int id, UpsertListingDto upsertListingDto, bool isAdmin, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await GetUserListingAsync(id, isAdmin, cancellationToken);
         var pictures = upsertListingDto.PictureUrls?.Select(u => new Picture(u)).ToList();
 
         listing.Update(upsertListingDto.CategoryId,
-                              upsertListingDto.Title!,
-                              upsertListingDto.Content!,
-                              upsertListingDto.IsPublic,
-                              pictures);
+                       upsertListingDto.Title!,
+                       upsertListingDto.Content!,
+                       upsertListingDto.IsPublic,
+                       pictures);
 
         await _listingRepository.SaveChangesAsync(cancellationToken);
 
         return _mapper.Map<ListingDto>(listing);
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(int id, bool isAdmin, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await GetUserListingAsync(id, isAdmin, cancellationToken);
 
         _listingRepository.Remove(listing);
         await _listingRepository.SaveChangesAsync(cancellationToken);
@@ -81,7 +98,9 @@ public class ListingAppService : IListingAppService
 
     public async Task HideAsync(int id, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await _listingRepository.FindAsync(l => l.Id == id, cancellationToken);
+        if (listing is null)
+            throw new KeyNotFoundException("Listing not found.");
 
         listing.Hide();
         await _listingRepository.SaveChangesAsync(cancellationToken);
@@ -89,7 +108,9 @@ public class ListingAppService : IListingAppService
 
     public async Task UnhideAsync(int id, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await _listingRepository.FindAsync(l => l.Id == id, cancellationToken);
+        if (listing is null)
+            throw new KeyNotFoundException("Listing not found.");
 
         listing.Unhide();
         await _listingRepository.SaveChangesAsync(cancellationToken);
@@ -97,7 +118,10 @@ public class ListingAppService : IListingAppService
 
     public async Task<ListingDto> ReplyAsync(int id, string content, CancellationToken cancellationToken)
     {
-        var listing = await GetListingAsync(id, cancellationToken);
+        var listing = await _listingRepository.FindAsync(l => l.Id == id, cancellationToken);
+        if (listing is null)
+            throw new KeyNotFoundException("Listing not found.");
+
         var userId = _userContext.GetCurrentUserId().GetValueOrDefault();
 
         var reply = new Reply(id, userId, content);
@@ -108,18 +132,10 @@ public class ListingAppService : IListingAppService
         return _mapper.Map<ListingDto>(listing);
     }
 
-    public async Task<IEnumerable<ReplyDto>> GetRepliesAsync(int id, CancellationToken cancellationToken)
-    {
-        var listing = await GetListingAsync(id, cancellationToken);
-        var userId = _userContext.GetCurrentUserId().GetValueOrDefault();
-
-        return _mapper.Map<IEnumerable<ReplyDto>>(listing.Replies);
-    }
-
-    private async Task<Listing> GetListingAsync(int id, CancellationToken cancellationToken)
+    private async Task<Listing> GetUserListingAsync(int id, bool isAdmin, CancellationToken cancellationToken)
     {
         var userId = _userContext.GetCurrentUserId();
-        var listing = await _listingRepository.FindAsync(l => l.Id == id && l.UserId == userId, cancellationToken);
+        var listing = await _listingRepository.FindAsync(l => l.Id == id && (l.UserId == userId || isAdmin), cancellationToken);
 
         if (listing is null)
             throw new KeyNotFoundException("Listing not found.");
